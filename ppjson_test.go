@@ -6,33 +6,33 @@ import (
 	"github.com/jit-y/ppjson"
 )
 
-func TestPrettyPrintString(t *testing.T) {
-	data := `test`
-	expected := `test`
-	p := ppjson.NewPrinter()
-
-	actual, err := p.PrettyPrint(data)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if expected != actual {
-		t.Errorf("not equal. expected=%s, got=%s", expected, actual)
-	}
+type data struct {
+	data     []byte
+	expected string
 }
 
-func TestPrettyPrintNil(t *testing.T) {
-	expected := "null"
-	p := ppjson.NewPrinter()
-
-	actual, err := p.PrettyPrint(nil)
-	if err != nil {
-		t.Error(err)
-		return
+func TestUnmarshal(t *testing.T) {
+	tests := []data{
+		{
+			data:     []byte("\"test\""),
+			expected: `test`,
+		},
+		{
+			data:     []byte("null"),
+			expected: `null`,
+		},
 	}
 
-	if expected != actual {
-		t.Errorf("not equal. expected=%s, got=%s", expected, actual)
+	p := ppjson.NewPrinter()
+
+	for i, test := range tests {
+		actual, err := p.Unmarshal(test.data)
+		if err != nil {
+			t.Errorf("tests[%d] %v", i, err)
+		}
+
+		if test.expected != actual {
+			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)
+		}
 	}
 }

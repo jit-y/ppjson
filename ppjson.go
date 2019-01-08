@@ -29,10 +29,10 @@ func (p *Printer) Unmarshal(data []byte) (string, error) {
 		return "", err
 	}
 
-	return p.PrettyPrint(v)
+	return p.format(v)
 }
 
-func (p *Printer) PrettyPrint(v interface{}) (string, error) {
+func (p *Printer) format(v interface{}) (string, error) {
 	switch val := v.(type) {
 	case string:
 		return val, nil
