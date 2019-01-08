@@ -36,6 +36,8 @@ func (p *Printer) PrettyPrint(v interface{}) (string, error) {
 	switch val := v.(type) {
 	case string:
 		return val, nil
+	case nil:
+		return "null", nil
 	}
 
 	return "", errors.New("should not reach here")
