@@ -1,44 +1,75 @@
 package ppjson
 
 import (
+	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Printer struct {
-	Indent  int
-	NewLine string
-	Stdin   io.Reader
-	Stdout  io.Writer
+	buffer  *bytes.Buffer
+	indent  int
+	newLine string
+	stdout  io.Writer
+}
+
+func Marshal(v interface{}) ([]byte, error) {
+	p := NewPrinter()
+	data, err := json.Marshal(&v)
+	if err != nil {
+		return nil, err
+	}
+
+	val, err := p.format(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(val), nil
 }
 
 func NewPrinter() *Printer {
 	return &Printer{
-		Indent:  2,
-		NewLine: "\n",
-		Stdin:   os.Stdin,
-		Stdout:  os.Stdout,
+		indent:  2,
+		newLine: "\n",
+		stdout:  os.Stdout,
 	}
 }
 
-func (p *Printer) Unmarshal(data []byte) (string, error) {
+func (p *Printer) format(data []byte) (string, error) {
 	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+	err := json.Unmarshal(data, &v)
+	if err != nil {
 		return "", err
 	}
 
-	return p.format(v)
-}
-
-func (p *Printer) format(v interface{}) (string, error) {
 	switch val := v.(type) {
 	case string:
-		return val, nil
+		return p.formatString(val)
 	case nil:
 		return "null", nil
+	default:
+		return "", nil
+	}
+}
+
+func (p *Printer) formatString(val string) (string, error) {
+	writer := bytes.Buffer{}
+	encoder := json.NewEncoder(&writer)
+
+	err := encoder.Encode(val)
+	if err != nil {
+		return "", err
 	}
 
-	return "", errors.New("should not reach here")
+	return strings.TrimRight(writer.String(), "\n"), nil
+}
+
+func (p *Printer) formatInt(val int) (string, error) {
+	v := strconv.Itoa(val)
+
+	return v, nil
 }

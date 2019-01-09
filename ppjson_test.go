@@ -1,37 +1,38 @@
 package ppjson_test
 
 import (
+	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/jit-y/ppjson"
 )
 
 type data struct {
-	data     []byte
-	expected string
+	data     interface{}
+	expected []byte
 }
 
-func TestUnmarshal(t *testing.T) {
+func TestMarshal(t *testing.T) {
 	tests := []data{
 		{
-			data:     []byte("\"test\""),
-			expected: `test`,
+			data:     "test",
+			expected: []byte("\"test\""),
 		},
 		{
-			data:     []byte("null"),
-			expected: `null`,
+			data:     nil,
+			expected: []byte("null"),
 		},
 	}
 
-	p := ppjson.NewPrinter()
-
 	for i, test := range tests {
-		actual, err := p.Unmarshal(test.data)
+		actual, err := ppjson.Marshal(test.data)
 		if err != nil {
 			t.Errorf("tests[%d] %v", i, err)
 		}
 
-		if test.expected != actual {
+		if !bytes.Equal(test.expected, actual) {
+			fmt.Println(test.expected, actual)
 			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)
 		}
 	}
