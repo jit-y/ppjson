@@ -13,20 +13,22 @@ import (
 
 type Printer struct {
 	buffer  *bytes.Buffer
+	value   interface{}
 	indent  int
 	newLine string
 	stdout  io.Writer
 }
 
-func Marshal(v interface{}) ([]byte, error) {
-	p := NewPrinter()
-
-	data, err := json.Marshal(&v)
+func Format(data []byte) ([]byte, error) {
+	var v interface{}
+	err := json.Unmarshal(data, &v)
 	if err != nil {
 		return nil, err
 	}
 
-	val, err := p.format(data)
+	p := NewPrinter(v)
+
+	val, err := p.format()
 	if err != nil {
 		return nil, err
 	}
@@ -34,22 +36,17 @@ func Marshal(v interface{}) ([]byte, error) {
 	return []byte(val), nil
 }
 
-func NewPrinter() *Printer {
+func NewPrinter(obj interface{}) *Printer {
 	return &Printer{
+		value:   obj,
 		indent:  2,
 		newLine: "\n",
 		stdout:  os.Stdout,
 	}
 }
 
-func (p *Printer) format(data []byte) (string, error) {
-	var v interface{}
-	err := json.Unmarshal(data, &v)
-	if err != nil {
-		return "", err
-	}
-
-	switch val := v.(type) {
+func (p *Printer) format() (string, error) {
+	switch val := p.value.(type) {
 	case string:
 		return p.formatString(val)
 	case nil:
@@ -73,10 +70,4 @@ func (p *Printer) formatString(val string) (string, error) {
 	}
 
 	return strings.TrimRight(writer.String(), "\n"), nil
-}
-
-func (p *Printer) formatInt(val int) (string, error) {
-	v := strconv.Itoa(val)
-
-	return v, nil
 }
