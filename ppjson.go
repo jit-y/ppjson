@@ -3,8 +3,10 @@ package ppjson
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -18,6 +20,7 @@ type Printer struct {
 
 func Marshal(v interface{}) ([]byte, error) {
 	p := NewPrinter()
+
 	data, err := json.Marshal(&v)
 	if err != nil {
 		return nil, err
@@ -51,8 +54,12 @@ func (p *Printer) format(data []byte) (string, error) {
 		return p.formatString(val)
 	case nil:
 		return "null", nil
+	case float64:
+		return strconv.FormatFloat(val, 'f', -1, 64), nil
 	default:
-		return "", nil
+		// should not reach here
+		k := reflect.ValueOf(val).Kind()
+		return "", fmt.Errorf("%v type is not supported", k)
 	}
 }
 

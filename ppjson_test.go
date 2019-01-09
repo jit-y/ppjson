@@ -23,6 +23,10 @@ func TestMarshal(t *testing.T) {
 			data:     nil,
 			expected: []byte("null"),
 		},
+		{
+			data:     1234567890,
+			expected: []byte("1234567890"),
+		},
 	}
 
 	for i, test := range tests {
