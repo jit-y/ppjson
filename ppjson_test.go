@@ -1,42 +1,40 @@
 package ppjson_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/jit-y/ppjson"
 )
 
 type data struct {
-	data     []byte
-	expected []byte
+	data     interface{}
+	expected string
 }
 
-func TestFormat(t *testing.T) {
+func TestString(t *testing.T) {
 	tests := []data{
 		{
-			data:     prepareJSON("test"),
-			expected: []byte("\"test\""),
+			data:     "test",
+			expected: "\"test\"",
 		},
 		{
-			data:     prepareJSON(nil),
-			expected: []byte("null"),
+			data:     nil,
+			expected: "null",
 		},
 		{
-			data:     prepareJSON(1234567890),
-			expected: []byte("1234567890"),
+			data:     1234567890,
+			expected: "1234567890",
 		},
 	}
 
 	for i, test := range tests {
-		actual, err := ppjson.Format(test.data)
-		if err != nil {
-			t.Errorf("tests[%d] %v", i, err)
-		}
+		p := ppjson.NewPrinter(os.Stdout, test.data)
+		actual := p.String()
 
-		if !bytes.Equal(test.expected, actual) {
+		if test.expected != actual {
 			fmt.Println(test.expected, actual)
 			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)
 		}
