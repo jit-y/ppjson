@@ -12,6 +12,7 @@ import (
 )
 
 type printer struct {
+	raw     []byte
 	value   interface{}
 	indent  int
 	newLine string
@@ -19,22 +20,16 @@ type printer struct {
 }
 
 func Format(data []byte) ([]byte, error) {
-	var v interface{}
-	err := json.Unmarshal(data, &v)
-	if err != nil {
-		return nil, err
-	}
-
-	p := NewPrinter(os.Stdout, v)
+	p := NewPrinter(os.Stdout, data)
 
 	val := p.String()
 
 	return []byte(val), nil
 }
 
-func NewPrinter(out io.Writer, obj interface{}) *printer {
+func NewPrinter(out io.Writer, raw []byte) *printer {
 	return &printer{
-		value:   obj,
+		raw:     raw,
 		indent:  2,
 		newLine: "\n",
 		out:     out,
@@ -49,6 +44,13 @@ func (p *printer) Write(b []byte) (int, error) {
 }
 
 func (p *printer) String() string {
+	var v interface{}
+	err := json.Unmarshal(p.raw, &v)
+	if err != nil {
+		return fmt.Sprintf("parse error: %v", err)
+	}
+	p.value = v
+
 	return p.format()
 }
 
@@ -66,16 +68,6 @@ func (p *printer) format() string {
 		return p.formatString(val)
 	case nil:
 		return "null"
-	case int:
-		return strconv.Itoa(val)
-	case int8, int16, int32, uint, uint8, uint16, uint32:
-		return fmt.Sprint(val)
-	case int64:
-		return strconv.FormatInt(val, 10)
-	case uint64:
-		return strconv.FormatUint(val, 10)
-	case float32:
-		return fmt.Sprint(val)
 	case float64:
 		return strconv.FormatFloat(val, 'f', -1, 64)
 	default:

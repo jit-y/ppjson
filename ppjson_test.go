@@ -1,7 +1,7 @@
 package ppjson_test
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -10,7 +10,7 @@ import (
 )
 
 type testData struct {
-	data     interface{}
+	data     []byte
 	expected string
 }
 
@@ -28,80 +28,25 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestCompareFormatWithString(t *testing.T) {
-	tests := buildTestData()
-
-	for i, test := range tests {
-		p := ppjson.NewPrinter(os.Stdout, test.data)
-		str := []byte(p.String())
-		format, err := ppjson.Format(str)
-		if err != nil {
-			t.Errorf("tests[%d] parse error: %v", i, err)
-		}
-
-		if !bytes.Equal(str, format) {
-			t.Errorf("tests[%d] not equal. String=%s, Format=%s", i, str, format)
-		}
-	}
-}
-
 func buildTestData() []testData {
 	return []testData{
 		{
-			data:     "test",
+			data:     toJson("test"),
 			expected: "\"test\"",
 		},
 		{
-			data:     nil,
+			data:     toJson(nil),
 			expected: "null",
 		},
 		{
-			data:     1234567890,
+			data:     toJson(1234567890),
 			expected: "1234567890",
 		},
-		{
-			data:     int8(123),
-			expected: "123",
-		},
-		{
-			data:     int16(123),
-			expected: "123",
-		},
-		{
-			data:     int32(123),
-			expected: "123",
-		},
-		{
-			data:     int64(123),
-			expected: "123",
-		},
-		{
-			data:     uint(123),
-			expected: "123",
-		},
-		{
-			data:     uint8(123),
-			expected: "123",
-		},
-		{
-			data:     uint16(123),
-			expected: "123",
-		},
-		{
-			data:     uint32(123),
-			expected: "123",
-		},
-		{
-			data:     uint64(123),
-			expected: "123",
-		},
-		{
-			data:     float32(123.456),
-			expected: "123.456",
-		},
-		{
-			data:     float64(123.456),
-			expected: "123.456",
-		},
 	}
+}
+
+func toJson(v interface{}) []byte {
+	data, _ := json.Marshal(v)
+
+	return data
 }
