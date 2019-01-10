@@ -9,7 +9,7 @@ import (
 	"github.com/jit-y/ppjson"
 )
 
-type data struct {
+type testData struct {
 	data     interface{}
 	expected string
 }
@@ -45,8 +45,8 @@ func TestCompareFormatWithString(t *testing.T) {
 	}
 }
 
-func buildTestData() []data {
-	return []data{
+func buildTestData() []testData {
+	return []testData{
 		{
 			data:     "test",
 			expected: "\"test\"",
