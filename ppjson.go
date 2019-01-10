@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -67,10 +68,19 @@ func (p *printer) format() string {
 		return "null"
 	case int:
 		return strconv.Itoa(val)
+	case int8, int16, int32, uint, uint8, uint16, uint32:
+		return fmt.Sprint(val)
+	case int64:
+		return strconv.FormatInt(val, 10)
+	case uint64:
+		return strconv.FormatUint(val, 10)
+	case float32:
+		return fmt.Sprint(val)
 	case float64:
 		return strconv.FormatFloat(val, 'f', -1, 64)
 	default:
-		return "parse failed"
+		k := reflect.ValueOf(val).Kind()
+		return fmt.Sprintf("parse failed: type %v is not supported", k)
 	}
 }
 
