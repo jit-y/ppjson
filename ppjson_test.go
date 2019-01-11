@@ -18,9 +18,8 @@ func TestString(t *testing.T) {
 	tests := buildTestData()
 
 	for i, test := range tests {
-		size := len(test.data)
 		buf := bytes.NewBuffer(test.data)
-		p := ppjson.NewPrinter(buf, size, os.Stdout)
+		p := ppjson.NewPrinter(buf, os.Stdout)
 		actual := p.String()
 
 		if test.expected != actual {

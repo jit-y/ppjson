@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 )
 
 type printer struct {
-	size    int
 	reader  io.Reader
 	writer  io.Writer
 	value   interface{}
@@ -21,18 +21,16 @@ type printer struct {
 }
 
 func Format(data []byte) ([]byte, error) {
-	size := len(data)
 	buf := bytes.NewBuffer(data)
-	p := NewPrinter(buf, size, os.Stdout)
+	p := NewPrinter(buf, os.Stdout)
 
 	val := p.String()
 
 	return []byte(val), nil
 }
 
-func NewPrinter(reader io.Reader, size int, writer io.Writer) *printer {
+func NewPrinter(reader io.Reader, writer io.Writer) *printer {
 	return &printer{
-		size:    size,
 		reader:  reader,
 		writer:  writer,
 		indent:  2,
@@ -49,14 +47,16 @@ func (p *printer) Write(b []byte) (int, error) {
 
 func (p *printer) String() string {
 	var v interface{}
-	b := make([]byte, p.size)
-	_, err := p.reader.Read(b)
+	var b []byte
+	buf := bytes.NewBuffer(b)
+	io.Copy(buf, p.reader)
 
+	data, err := ioutil.ReadAll(buf)
 	if err != nil {
-		return fmt.Sprintf("err: %v", err)
+		return fmt.Sprintf("error: %v", err)
 	}
 
-	err = json.Unmarshal(b, &v)
+	err = json.Unmarshal(data, &v)
 	if err != nil {
 		return fmt.Sprintf("parse error: %v", err)
 	}
