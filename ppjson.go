@@ -12,27 +12,31 @@ import (
 )
 
 type printer struct {
-	raw     []byte
+	size    int
+	reader  io.Reader
+	writer  io.Writer
 	value   interface{}
 	indent  int
 	newLine string
-	out     io.Writer
 }
 
 func Format(data []byte) ([]byte, error) {
-	p := NewPrinter(os.Stdout, data)
+	size := len(data)
+	buf := bytes.NewBuffer(data)
+	p := NewPrinter(buf, size, os.Stdout)
 
 	val := p.String()
 
 	return []byte(val), nil
 }
 
-func NewPrinter(out io.Writer, raw []byte) *printer {
+func NewPrinter(reader io.Reader, size int, writer io.Writer) *printer {
 	return &printer{
-		raw:     raw,
+		size:    size,
+		reader:  reader,
+		writer:  writer,
 		indent:  2,
 		newLine: "\n",
-		out:     out,
 	}
 }
 
@@ -45,7 +49,14 @@ func (p *printer) Write(b []byte) (int, error) {
 
 func (p *printer) String() string {
 	var v interface{}
-	err := json.Unmarshal(p.raw, &v)
+	b := make([]byte, p.size)
+	_, err := p.reader.Read(b)
+
+	if err != nil {
+		return fmt.Sprintf("err: %v", err)
+	}
+
+	err = json.Unmarshal(b, &v)
 	if err != nil {
 		return fmt.Sprintf("parse error: %v", err)
 	}
@@ -55,7 +66,7 @@ func (p *printer) String() string {
 }
 
 func (p *printer) PrettyPrint() {
-	fmt.Fprint(p.out, p.String())
+	fmt.Fprint(p.writer, p.String())
 }
 
 func (p *printer) PP() {

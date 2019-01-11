@@ -1,8 +1,8 @@
 package ppjson_test
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -18,11 +18,12 @@ func TestString(t *testing.T) {
 	tests := buildTestData()
 
 	for i, test := range tests {
-		p := ppjson.NewPrinter(os.Stdout, test.data)
+		size := len(test.data)
+		buf := bytes.NewBuffer(test.data)
+		p := ppjson.NewPrinter(buf, size, os.Stdout)
 		actual := p.String()
 
 		if test.expected != actual {
-			fmt.Println(test.expected, actual)
 			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)
 		}
 	}
