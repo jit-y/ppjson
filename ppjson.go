@@ -24,7 +24,7 @@ func Format(data []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(data)
 	p := NewPrinter(buf, os.Stdout)
 
-	val := p.String()
+	val := p.Pretty()
 
 	return []byte(val), nil
 }
@@ -40,12 +40,12 @@ func NewPrinter(reader io.Reader, writer io.Writer) *printer {
 
 func (p *printer) Write(b []byte) (int, error) {
 	buf := bytes.NewBuffer(b)
-	val := []byte(p.String())
+	val := []byte(p.Pretty())
 
 	return buf.Write(val)
 }
 
-func (p *printer) String() string {
+func (p *printer) Pretty() string {
 	var v interface{}
 	var b []byte
 	buf := bytes.NewBuffer(b)
@@ -66,7 +66,7 @@ func (p *printer) String() string {
 }
 
 func (p *printer) PrettyPrint() {
-	fmt.Fprint(p.writer, p.String())
+	fmt.Fprint(p.writer, p.Pretty())
 }
 
 func (p *printer) PP() {

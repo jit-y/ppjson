@@ -20,7 +20,7 @@ func TestString(t *testing.T) {
 	for i, test := range tests {
 		buf := bytes.NewBuffer(test.data)
 		p := ppjson.NewPrinter(buf, os.Stdout)
-		actual := p.String()
+		actual := p.Pretty()
 
 		if test.expected != actual {
 			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)
