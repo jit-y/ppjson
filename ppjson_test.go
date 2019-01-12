@@ -20,7 +20,10 @@ func TestString(t *testing.T) {
 	for i, test := range tests {
 		buf := bytes.NewBuffer(test.data)
 		p := ppjson.NewPrinter(buf, os.Stdout)
-		actual := p.Pretty()
+		actual, err := p.Pretty()
+		if err != nil {
+			t.Errorf("tests[%d] parse error. %v", i, err)
+		}
 
 		if test.expected != actual {
 			t.Errorf("tests[%d] wrong. expected=%s, got=%s", i, test.expected, actual)

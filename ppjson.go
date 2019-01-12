@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -24,7 +23,10 @@ func Format(data []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(data)
 	p := NewPrinter(buf, os.Stdout)
 
-	val := p.Pretty()
+	val, err := p.Pretty()
+	if err != nil {
+		return nil, err
+	}
 
 	return []byte(val), nil
 }
@@ -40,61 +42,51 @@ func NewPrinter(reader io.Reader, writer io.Writer) *printer {
 
 func (p *printer) Write(b []byte) (int, error) {
 	buf := bytes.NewBuffer(b)
-	val := []byte(p.Pretty())
-
-	return buf.Write(val)
-}
-
-func (p *printer) Pretty() string {
-	var v interface{}
-	var b []byte
-	buf := bytes.NewBuffer(b)
-	io.Copy(buf, p.reader)
-
-	data, err := ioutil.ReadAll(buf)
+	val, err := p.Pretty()
 	if err != nil {
-		return fmt.Sprintf("error: %v", err)
+		return 0, err
 	}
 
-	err = json.Unmarshal(data, &v)
+	return buf.Write([]byte(val))
+}
+
+func (p *printer) Pretty() (string, error) {
+	dec := json.NewDecoder(p.reader)
+	t, err := dec.Token()
 	if err != nil {
-		return fmt.Sprintf("parse error: %v", err)
+		return "", err
 	}
-	p.value = v
 
-	return p.format()
+	val, err := p.format(t)
+	if err != nil {
+		return "", err
+	}
+
+	return val, nil
 }
 
-func (p *printer) PrettyPrint() {
-	fmt.Fprint(p.writer, p.Pretty())
-}
-
-func (p *printer) PP() {
-	p.PrettyPrint()
-}
-
-func (p *printer) format() string {
-	switch val := p.value.(type) {
+func (p *printer) format(v interface{}) (string, error) {
+	switch val := v.(type) {
 	case string:
 		return p.formatString(val)
 	case nil:
-		return "null"
+		return "null", nil
 	case float64:
-		return strconv.FormatFloat(val, 'f', -1, 64)
+		return strconv.FormatFloat(val, 'f', -1, 64), nil
 	default:
 		k := reflect.ValueOf(val).Kind()
-		return fmt.Sprintf("parse failed: type %v is not supported", k)
+		return "", fmt.Errorf("parse failed: type %v is not supported", k)
 	}
 }
 
-func (p *printer) formatString(val string) string {
+func (p *printer) formatString(val string) (string, error) {
 	writer := bytes.Buffer{}
 	encoder := json.NewEncoder(&writer)
 
 	err := encoder.Encode(val)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return strings.TrimRight(writer.String(), "\n")
+	return strings.TrimRight(writer.String(), "\n"), nil
 }
