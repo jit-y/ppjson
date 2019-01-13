@@ -51,7 +51,7 @@ func buildTestData() []testData {
 		},
 		{
 			desc: "array",
-			data: toJson([]interface{}{1, "111", nil}),
+			data: []byte("[1,\"111\",null]"),
 			expected: `[
   1,
   "111",
