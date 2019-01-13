@@ -14,7 +14,6 @@ import (
 
 type printer struct {
 	decoder *json.Decoder
-	reader  io.Reader
 	writer  io.Writer
 	depth   int
 	indent  int
@@ -38,7 +37,6 @@ func NewPrinter(reader io.Reader, writer io.Writer) *printer {
 
 	return &printer{
 		decoder: dec,
-		reader:  reader,
 		writer:  writer,
 		indent:  2,
 		depth:   0,
