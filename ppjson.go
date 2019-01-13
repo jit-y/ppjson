@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-type printer struct {
+// Printer is a struct for print state.
+type Printer struct {
 	decoder *json.Decoder
 	writer  io.Writer
 	depth   int
@@ -20,22 +20,11 @@ type printer struct {
 	newLine string
 }
 
-func Format(data []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(data)
-	p := NewPrinter(buf, os.Stdout)
-
-	val, err := p.Pretty()
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(val), nil
-}
-
-func NewPrinter(reader io.Reader, writer io.Writer) *printer {
+// NewPrinter returns a pointer of initialized Printer object.
+func NewPrinter(reader io.Reader, writer io.Writer) *Printer {
 	dec := json.NewDecoder(reader)
 
-	return &printer{
+	return &Printer{
 		decoder: dec,
 		writer:  writer,
 		indent:  2,
@@ -44,7 +33,7 @@ func NewPrinter(reader io.Reader, writer io.Writer) *printer {
 	}
 }
 
-func (p *printer) Write(b []byte) (int, error) {
+func (p *Printer) Write(b []byte) (int, error) {
 	buf := bytes.NewBuffer(b)
 	val, err := p.Pretty()
 	if err != nil {
@@ -54,7 +43,8 @@ func (p *printer) Write(b []byte) (int, error) {
 	return buf.Write([]byte(val))
 }
 
-func (p *printer) Pretty() (string, error) {
+// Pretty returns pretty formatted string and error
+func (p *Printer) Pretty() (string, error) {
 	t, err := p.decoder.Token()
 	if err != nil {
 		return "", err
@@ -68,7 +58,7 @@ func (p *printer) Pretty() (string, error) {
 	return val, nil
 }
 
-func (p *printer) format(v interface{}) (string, error) {
+func (p *Printer) format(v interface{}) (string, error) {
 	switch val := v.(type) {
 	case string:
 		return p.formatString(val)
@@ -84,7 +74,7 @@ func (p *printer) format(v interface{}) (string, error) {
 	}
 }
 
-func (p *printer) formatString(val string) (string, error) {
+func (p *Printer) formatString(val string) (string, error) {
 	writer := bytes.Buffer{}
 	encoder := json.NewEncoder(&writer)
 
@@ -96,7 +86,7 @@ func (p *printer) formatString(val string) (string, error) {
 	return strings.TrimRight(writer.String(), "\n"), nil
 }
 
-func (p *printer) formatEnumerable(d json.Delim) (string, error) {
+func (p *Printer) formatEnumerable(d json.Delim) (string, error) {
 	switch d {
 	case '[':
 		return p.formatSlice(d)
@@ -107,7 +97,7 @@ func (p *printer) formatEnumerable(d json.Delim) (string, error) {
 	}
 }
 
-func (p *printer) formatSlice(d json.Delim) (string, error) {
+func (p *Printer) formatSlice(d json.Delim) (string, error) {
 	var b strings.Builder
 	b.WriteString(d.String() + p.newLine)
 
@@ -128,7 +118,6 @@ func (p *printer) formatSlice(d json.Delim) (string, error) {
 			}
 
 			b.WriteString(p.stringWithIndent(val))
-
 		}
 
 		return nil
@@ -153,7 +142,7 @@ func (p *printer) formatSlice(d json.Delim) (string, error) {
 	return b.String(), nil
 }
 
-func (p *printer) formatMap(d json.Delim) (string, error) {
+func (p *Printer) formatMap(d json.Delim) (string, error) {
 	var b strings.Builder
 	b.WriteString(d.String() + p.newLine)
 
@@ -186,7 +175,6 @@ func (p *printer) formatMap(d json.Delim) (string, error) {
 			}
 
 			b.WriteString(p.stringWithIndent("\"" + key + "\"" + ": " + val))
-
 		}
 
 		return nil
@@ -211,22 +199,29 @@ func (p *printer) formatMap(d json.Delim) (string, error) {
 	return b.String(), nil
 }
 
-func (p *printer) currentIndent() string {
+func (p *Printer) currentIndent() string {
 	return strings.Repeat(" ", p.indent*p.depth)
 }
 
-func (p *printer) stringWithIndent(val string) string {
+func (p *Printer) stringWithIndent(val string) string {
 	return p.currentIndent() + val
 }
 
 type withIndentFunc func() error
 
-func (p *printer) withIndent(fn withIndentFunc) error {
-	p.depth++
+func (p *Printer) withIndent(fn withIndentFunc) error {
+	p.incrementDepth()
+	defer p.decrementDepth()
 
 	err := fn()
 
-	p.depth--
-
 	return err
+}
+
+func (p *Printer) incrementDepth() {
+	p.depth++
+}
+
+func (p *Printer) decrementDepth() {
+	p.depth--
 }
