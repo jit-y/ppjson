@@ -102,7 +102,8 @@ func (p *printer) formatEnumerable(d json.Delim) (string, error) {
 	switch d {
 	case '[':
 		return p.formatSlice(d)
-
+	case '{':
+		return p.formatMap(d)
 	default:
 		return "", errors.New("should not reach here")
 	}
@@ -110,7 +111,7 @@ func (p *printer) formatEnumerable(d json.Delim) (string, error) {
 
 func (p *printer) formatSlice(d json.Delim) (string, error) {
 	var b strings.Builder
-	b.WriteString(p.stringWithIndent(d.String() + p.newLine))
+	b.WriteString(d.String() + p.newLine)
 
 	err := p.withIndent(func() error {
 		for i := 0; p.decoder.More(); i++ {
@@ -137,6 +138,10 @@ func (p *printer) formatSlice(d json.Delim) (string, error) {
 		return nil
 	})
 
+	if err != nil {
+		return "", err
+	}
+
 	token, err := p.decoder.Token()
 	if err != nil {
 		return "", err
@@ -147,7 +152,65 @@ func (p *printer) formatSlice(d json.Delim) (string, error) {
 		return "", errors.New("invalid format")
 	}
 
-	b.WriteString(p.stringWithIndent(p.newLine + delim.String()))
+	b.WriteString(p.newLine + p.stringWithIndent(delim.String()))
+
+	return b.String(), nil
+}
+
+func (p *printer) formatMap(d json.Delim) (string, error) {
+	var b strings.Builder
+	b.WriteString(d.String() + p.newLine)
+
+	err := p.withIndent(func() error {
+		for i := 0; p.decoder.More(); i++ {
+			keyTok, err := p.decoder.Token()
+
+			if err != nil {
+				return err
+			}
+
+			key, ok := keyTok.(string)
+			if !ok {
+				return errors.New("invalid format")
+			}
+
+			p.decoder.More()
+			valTok, err := p.decoder.Token()
+			if err != nil {
+				return err
+			}
+
+			val, err := p.format(valTok)
+			if err != nil {
+				return err
+			}
+
+			if i > 0 {
+				b.WriteString("," + p.newLine)
+			}
+
+			b.WriteString(p.stringWithIndent("\"" + key + "\"" + ": " + val))
+
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	token, err := p.decoder.Token()
+	if err != nil {
+		return "", err
+	}
+
+	delim, ok := token.(json.Delim)
+	if !ok {
+		return "", errors.New("invalid format")
+	}
+
+	b.WriteString(p.newLine + p.stringWithIndent(delim.String()))
 
 	return b.String(), nil
 }
@@ -160,7 +223,9 @@ func (p *printer) stringWithIndent(val string) string {
 	return p.currentIndent() + val
 }
 
-func (p *printer) withIndent(fn func() error) error {
+type withIndentFunc func() error
+
+func (p *printer) withIndent(fn withIndentFunc) error {
 	p.depth++
 
 	err := fn()

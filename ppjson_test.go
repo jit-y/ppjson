@@ -58,6 +58,20 @@ func buildTestData() []testData {
   null
 ]`,
 		},
+		{
+			desc: "map",
+			data: []byte("{\"foo\":null,\"bar\":\"111\",\"baz\":1,\"array\":[1,\"111\",null]}"),
+			expected: `{
+  "foo": null,
+  "bar": "111",
+  "baz": 1,
+  "array": [
+    1,
+    "111",
+    null
+  ]
+}`,
+		},
 	}
 }
 
