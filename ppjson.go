@@ -113,14 +113,12 @@ func (p *printer) formatSlice(d json.Delim) (string, error) {
 
 	err := p.withIndent(func() error {
 		for i := 0; p.decoder.More(); i++ {
-			var v interface{}
-
-			err := p.decoder.Decode(&v)
+			tok, err := p.decoder.Token()
 			if err != nil {
 				return err
 			}
 
-			val, err := p.format(v)
+			val, err := p.format(tok)
 			if err != nil {
 				return err
 			}
