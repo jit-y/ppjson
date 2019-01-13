@@ -79,7 +79,7 @@ func (p *printer) format(v interface{}) (string, error) {
 	case float64:
 		return strconv.FormatFloat(val, 'f', -1, 64), nil
 	case json.Delim:
-		return p.formatSlice(val)
+		return p.formatEnumerable(val)
 	default:
 		k := reflect.ValueOf(val).Kind()
 		return "", fmt.Errorf("parse failed: type %v is not supported", k)
@@ -96,6 +96,16 @@ func (p *printer) formatString(val string) (string, error) {
 	}
 
 	return strings.TrimRight(writer.String(), "\n"), nil
+}
+
+func (p *printer) formatEnumerable(d json.Delim) (string, error) {
+	switch d {
+	case '[':
+		return p.formatSlice(d)
+
+	default:
+		return "", errors.New("should not reach here")
+	}
 }
 
 func (p *printer) formatSlice(d json.Delim) (string, error) {
