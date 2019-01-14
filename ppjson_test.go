@@ -51,11 +51,21 @@ func buildTestData() []testData {
 		},
 		{
 			desc: "array",
-			data: []byte("[1,\"111\",null]"),
+			data: []byte("[1,\"111\",null, {\"foo\": null, \"bar\": \"111\", \"baz\": 1, \"array\": [1, \"111\", null]}]"),
 			expected: `[
   1,
   "111",
-  null
+  null,
+  {
+    "foo": null,
+    "bar": "111",
+    "baz": 1,
+    "array": [
+      1,
+      "111",
+      null
+    ]
+  }
 ]`,
 		},
 		{
