@@ -3,7 +3,6 @@ package ppjson_test
 import (
 	"bytes"
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/jit-y/ppjson"
@@ -20,7 +19,7 @@ func TestString(t *testing.T) {
 
 	for _, test := range tests {
 		buf := bytes.NewBuffer(test.data)
-		p := ppjson.NewPrinter(buf, os.Stdout)
+		p := ppjson.NewPrinter(buf)
 		actual, err := p.Pretty()
 		if err != nil {
 			t.Errorf("test %s: %v", test.desc, err)

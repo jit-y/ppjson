@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	printer := ppjson.NewPrinter(os.Stdin, os.Stdout)
+	printer := ppjson.NewPrinter(os.Stdin)
 	j, err := printer.Pretty()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -14,33 +14,21 @@ import (
 // Printer is a struct for print state.
 type Printer struct {
 	decoder *json.Decoder
-	writer  io.Writer
 	depth   int
 	indent  int
 	newLine string
 }
 
 // NewPrinter returns a pointer of initialized Printer object.
-func NewPrinter(reader io.Reader, writer io.Writer) *Printer {
+func NewPrinter(reader io.Reader) *Printer {
 	dec := json.NewDecoder(reader)
 
 	return &Printer{
 		decoder: dec,
-		writer:  writer,
 		indent:  2,
 		depth:   0,
 		newLine: "\n",
 	}
-}
-
-func (p *Printer) Write(b []byte) (int, error) {
-	buf := bytes.NewBuffer(b)
-	val, err := p.Pretty()
-	if err != nil {
-		return 0, err
-	}
-
-	return buf.Write([]byte(val))
 }
 
 // Pretty returns pretty formatted string and error
@@ -63,9 +51,9 @@ func (p *Printer) format(v interface{}) (string, error) {
 	case string:
 		return p.formatString(val)
 	case nil:
-		return "null", nil
+		return p.formatNil()
 	case float64:
-		return strconv.FormatFloat(val, 'f', -1, 64), nil
+		return p.formatFloat64(val)
 	case json.Delim:
 		return p.formatEnumerable(val)
 	default:
@@ -84,6 +72,14 @@ func (p *Printer) formatString(val string) (string, error) {
 	}
 
 	return strings.TrimRight(writer.String(), "\n"), nil
+}
+
+func (p *Printer) formatNil() (string, error) {
+	return "null", nil
+}
+
+func (p *Printer) formatFloat64(val float64) (string, error) {
+	return strconv.FormatFloat(val, 'f', -1, 64), nil
 }
 
 func (p *Printer) formatEnumerable(d json.Delim) (string, error) {
